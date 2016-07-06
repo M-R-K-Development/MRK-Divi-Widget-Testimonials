@@ -38,6 +38,11 @@ while ($wp_query->have_posts()) {
     $output .= sprintf('[et_pb_slide background_position="default" background_size="default" background_color="%s" use_bg_overlay="off" use_text_overlay="off" alignment="center" background_layout="%s" allow_player_pause="off" text_border_radius="3" header_font_select="default" header_font="||||" body_font_select="default" body_font="||||" custom_button="off" button_font_select="default" button_font="||||" button_use_icon="default" button_icon_placement="right" button_on_hover="on" admin_title=""]', $background_color, $background_layout);
 
     $portrait_image = get_field('portrait_image');
+
+    if (!$portrait_image) {
+        $portrait_image['url'] = 'http://716eafb8bac0aa7b6feb-309c6f0fa0ca6ac25ad827f1e047dcb0.r4.cf1.rackcdn.com/avatar.png';
+    }
+
     $output .= sprintf('<div class="et_pb_testimonial_portrait mrk_portrait_%s" style="background-image: url(\'%s\');"></div>', $image_alignment, $portrait_image['url']);
     $output .= sprintf('<p style="text-align: %s;">"%s"</p>', $text_alignment, get_the_content());
 

@@ -4,77 +4,78 @@
  * MRK Divi Widget Testimonials Widget
  *
  */
-class MRK_Divi_Widget_Testimonial extends DiviCustomWidget
+class MRK_Divi_Widget_Testimonial extends ET_Builder_Module
 {
+    public $name = 'MRK Testimonials Widget';
+    public $slug = 'mrk_divi_widget_testimonials';
+    public $fields;
 
-    public function __construct($dir)
+    public function __construct()
     {
-        $this->config = array(
-            'name' => 'MRK Testimonials Widget',
-            'slug' => 'mrk_divi_widget_testimonials',
-        );
+        $this->setup();
+        parent::__construct();
+    }
 
-        $this->addField(
-                array(
-                    'posts_per_page' => array(
+    public function setup()
+    {
+        $this->_init_fields();
+    }
+
+    private function _init_fields()
+    {
+        $this->fields = array();
+
+        $this->fields['posts_per_page'] = array(
                                 'label'           => 'Number of testimonials displayed',
                                 'type'            => 'text',
                                 'description'     => 'Enter the amount of testimonial to display. Enter -1 to display all',
                                 'default'         => 10,
-                        ),
-                )
         );
 
-        $this->addField(
-                array(
-                    'display_category_selection' => array(
-                        'label'             => 'Select by category',
-                        'type'              => 'yes_no_button',
+        $this->fields['display_category_selection'] = array(
+                        'label'                           => 'Select by category',
+                        'type'                            => 'yes_no_button',
+                                                'options' => array(
+                            'off' => __( "No", 'et_builder' ),
+                            'on'  => __( 'Yes', 'et_builder' ),
+                        ),
+
                         'description'       => 'Would you like to filter the posts by category',
                         'affects'           => array(
                                     '#et_pb_include_categories',
                                 ),
-                        ),
-                )
         );
 
-        $this->addField(array(
-                 'include_categories' => array(
+        $this->fields['include_categories'] = array(
                     'label'           => esc_html__( 'Include from only these categories', 'et_builder' ),
-                    'renderer'        => 'et_builder_include_custom_categories_option',
+                    'renderer'        => 'et_builder_include_testimonial_categories_option',
                     'render_options'  => array('term_name' => 'testimonial_category'),
                     'option_category' => 'basic_option',
                     'description'     => esc_html__( 'Select the categories that you would like to include in the feed.', 'et_builder' ),
                     'depends_show_if' => 'on',
-                ),
-      ));
+      );
 
-        $this->addField(
-            array(
-                'open_link_in_new_window' => array(
-                    'label'             => 'Open link in a new window',
-                    'type'              => 'yes_no_button',
+        $this->fields['open_link_in_new_window'] = array(
+                    'label'                           => 'Open link in a new window',
+                    'type'                            => 'yes_no_button',
+                                            'options' => array(
+                            'off' => __( "No", 'et_builder' ),
+                            'on'  => __( 'Yes', 'et_builder' ),
+                        ),
+
                     'description'       => 'Open link in a new window.',
                     'default'           => 'off',
-                    ),
-            )
         );
 
-        $this->addField(
-            array(
-                'background_color' => array(
+        $this->fields['background_color'] = array(
                 'label'           => __('Background Color', 'et_builder'),
                 'type'            => 'color',
                 'option_category' => 'basic_option',
                 'description'     => __('Background Color', 'et_builder'),
                 'default'         => '#f5f5f5',
-                ),
-            )
         );
 
-        $this->addField(
-            array(
-            'text_alignment' => array(
+        $this->fields['text_alignment'] = array(
                 'label'           => esc_html__( 'Text alignment', 'et_builder' ),
                 'type'            => 'select',
                 'option_category' => 'configuration',
@@ -85,11 +86,9 @@ class MRK_Divi_Widget_Testimonial extends DiviCustomWidget
                 ),
                 'description'     => esc_html__( 'Here you can define the alignemnt of Text', 'et_builder' ),
                 'default'         => 'left',
-            ), )
         );
 
-        $this->addField(array(
-            'background_layout' => array(
+        $this->fields['background_layout'] = array(
                 'label'           => esc_html__( 'Text Color', 'et_builder' ),
                 'type'            => 'select',
                 'option_category' => 'color_option',
@@ -99,13 +98,9 @@ class MRK_Divi_Widget_Testimonial extends DiviCustomWidget
                 ),
                 'default'     => 'dark',
                 'description' => esc_html__( 'Here you can choose whether your text should be light or dark. If you are working with a dark background, then your text should be light. If your background is light, then your text should be set to dark.', 'et_builder' ),
-            ),
+            );
 
-         ));
-
-        $this->addField(
-            array(
-            'image_alignment' => array(
+        $this->fields['image_alignment'] = array(
                 'label'           => esc_html__( 'Portrait Image alignment', 'et_builder' ),
                 'type'            => 'select',
                 'option_category' => 'configuration',
@@ -116,21 +111,55 @@ class MRK_Divi_Widget_Testimonial extends DiviCustomWidget
                 ),
                 'description'     => esc_html__( 'Here you can define the alignment of Portrait Image', 'et_builder' ),
                 'default'         => 'left',
-            ), )
         );
 
-        $this->addField(
-                array(
-                    'admin_label' => array(
+        $this->fields['admin_label'] = array(
                     'label'       => __('Admin Label', 'et_builder'),
                     'type'        => 'text',
                     'description' => __('This will change the label of the module in the builder for easy identification.', 'et_builder'),
-                    ),
-                )
             );
+    }
 
-        parent::__construct($dir);
+    public function init()
+    {
+        $this->whitelisted_fields = array_keys($this->fields);
+
+        /*
+         * Prefix the slug with et_pb
+         */
+        if (strpos($this->slug, 'et_pb_') !== 0) {
+            $this->slug = 'et_pb_'.$this->slug;
+        }
+
+        $defaults = array();
+
+        foreach ($this->fields as $field => $options) {
+            if (isset($options['default'])) {
+                $defaults[$field] = $options['default'];
+            }
+        }
+
+        $this->field_defaults = $defaults;
+    }
+
+    /**
+     * Get Fields
+     *
+     * @return [type] [description]
+     */
+    public function get_fields()
+    {
+        return $this->fields;
+    }
+
+    public function shortcode_callback($atts, $content = null, $function_name)
+    {
+        extract($atts);
+        ob_start();
+        require MRK_TESTIMONIAL_DIVI_WIDGET_DIR . '/src/templates/mrk_divi_widget_testimonials.php';
+
+        return ob_get_clean();
     }
 }
 
-new MRK_Divi_Widget_Testimonial($dir);
+new MRK_Divi_Widget_Testimonial();

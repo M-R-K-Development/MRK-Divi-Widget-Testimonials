@@ -12,13 +12,12 @@ if (! defined('ABSPATH')) {
     exit; // Exit if accessed directly
 }
 
-global $mrk_divi_custom_widgets_enabler;
+// constants
+define('MRK_TESTIMONIAL_DIVI_WIDGET_DIR', __DIR__);
+define('MRK_TESTIMONIAL_DIVI_WIDGET_URL', plugins_url('/'.basename(__DIR__)));
 
-if (! defined('ABSPATH')) {
-    exit; // Exit if accessed directly
-}
-
-// DiviCustomWidget
+require_once MRK_TESTIMONIAL_DIVI_WIDGET_DIR.'/src/class-mrk-divi-widget-testimonial-post-type-activate.php';
+register_activation_hook(__FILE__, array('MRK_Divi_Widget_Testimonial_Post_Type_Activate', 'activate'));
 
 /**
  * Defines variables for
@@ -26,44 +25,10 @@ if (! defined('ABSPATH')) {
  */
 function mrk_divi_widget_testimonials()
 {
-    global $mrk_divi_custom_widgets_enabler;
-    $files = glob(__DIR__.'/src/widgets/*');
-    $mrk_divi_custom_widgets_enabler->addCustomWidgets(array(__DIR__ => $files));
+    require_once MRK_TESTIMONIAL_DIVI_WIDGET_DIR . '/src/widgets/MRK_Divi_Widget_Testimonial.php';
 }
 
-add_filter('mrk_divi_widgets_load', 'mrk_divi_widget_testimonials');
-
-// Check if Divi Module is installed.
-if (!function_exists('check_mrk_module_builder_present_for_mrk_divi_widget_testimonials')) {
-    function admin_error_notice_mrk_custom_widget_absent_for_mrk_divi_widget_testimonials()
-    {
-        ?>
-    <div class="notice notice-error is-dismissible">
-        <p><?php _e( 'MRK Divi Widget Testimonials requires MRK Divi Builder Custom Widget active plugin.', 'sample-text-domain' );
-        ?></p>
-    </div>
-    <?php
-
-    }
-
-    function check_mrk_module_builder_present_for_mrk_divi_widget_testimonials()
-    {
-        if (!class_exists('\\MRKDiviCustomWidgetsEnabler')) { // MRK Custom Widget plugin not installed.
-            add_action( 'admin_notices', 'admin_error_notice_mrk_custom_widget_absent_for_mrk_divi_widget_testimonials' );
-        }
-    }
-}
-
-add_action('init', 'check_mrk_module_builder_present_for_mrk_divi_widget_testimonials');
-
-// add_action( 'admin_head', 'clear_testimonials_widget' );
-
-function clear_testimonials_widget()
-{
-    echo '<script>
-            localStorage.clear();
-        </script>';
-}
+add_filter('et_builder_ready', 'mrk_divi_widget_testimonials');
 
 // Register Custom Post Type - Testimonial
 function custom_post_type_testimonials()
@@ -303,3 +268,46 @@ function testimonials_acf()
 ));
     }
 }
+
+if ( ! function_exists( 'et_builder_include_testimonial_categories_option' ) ) :
+function et_builder_include_testimonial_categories_option($args = array())
+{
+    $defaults = apply_filters( 'et_builder_include_categories_defaults', array (
+        'use_terms' => true,
+        'term_name' => $args['render_options']['term_name'],
+    ) );
+
+    $args = wp_parse_args( $args, $defaults );
+
+    $output = "\t" . "<% var et_pb_include_categories_temp = typeof et_pb_include_categories !== 'undefined' ? et_pb_include_categories.split( ',' ) : []; %>" . "\n";
+
+    if ( $args['use_terms'] ) {
+        $cats_array = get_terms( $args['term_name'] );
+    } else {
+        $cats_array = get_categories( apply_filters( 'et_builder_get_categories_args', 'hide_empty=0' ) );
+    }
+
+    if ( empty( $cats_array ) ) {
+        $output = '<p>' . esc_html__( "You currently don't have any projects assigned to a category.", 'et_builder' ) . '</p>';
+    }
+
+    foreach ( $cats_array as $category ) {
+        $contains = sprintf(
+            '<%%= _.contains( et_pb_include_categories_temp, "%1$s" ) ? checked="checked" : "" %%>',
+            esc_html( $category->term_id )
+        );
+
+        $output .= sprintf(
+            '%4$s<label><input type="checkbox" name="et_pb_include_categories" value="%1$s"%3$s> %2$s</label><br/>',
+            esc_attr( $category->term_id ),
+            esc_html( $category->name ),
+            $contains,
+            "\n\t\t\t\t\t"
+        );
+    }
+
+    $output = '<div id="et_pb_include_categories">' . $output . '</div>';
+
+    return apply_filters( 'et_builder_include_categories_option_html', $output );
+}
+endif;
